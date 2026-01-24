@@ -13,32 +13,31 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onSelectCategory 
 }) => {
   return (
-    <div className="mb-8">
-      <h3 className="text-lg font-medium text-gray-700 mb-3">Categories</h3>
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide py-2">
+      <div className="flex space-x-3 px-1 min-w-max">
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onSelectCategory(null)}
-          className={`px-4 py-2 rounded-full text-sm font-medium ${
+          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm border ${
             selectedCategory === null
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'bg-orange-500 text-white border-orange-500 shadow-md ring-2 ring-orange-200'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500 hover:shadow-md'
           }`}
         >
-          All
+          All Dishes
         </motion.button>
         
         {categories.map(category => (
           <motion.button
             key={category}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onSelectCategory(category)}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
+            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm border ${
               selectedCategory === category
-                ? 'bg-orange-500 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-orange-500 text-white border-orange-500 shadow-md ring-2 ring-orange-200'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500 hover:shadow-md'
             }`}
           >
             {category}

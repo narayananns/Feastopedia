@@ -63,7 +63,7 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
       
       // Validate image URL
       if (!formData.imageUrl) {
-        toast.error('Please provide an image URL');
+        toast.error('Please provide an image');
         return;
       }
       
@@ -84,21 +84,79 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit check (though backend handles more)
+         toast.error('Image size should be less than 5MB');
+         return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Dish Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">{buttonText}</h2>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Dish Image
+          </label>
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => document.getElementById('image-upload')?.click()}>
+             {formData.imageUrl ? (
+                <div className="relative w-full h-64">
+                   <img 
+                     src={formData.imageUrl} 
+                     alt="Preview" 
+                     className="w-full h-full object-contain rounded-md"
+                   />
+                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity rounded-md">
+                      <span className="text-white font-medium">Click to change image</span>
+                   </div>
+                </div>
+             ) : (
+                <div className="text-center py-8">
+                   <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                   </svg>
+                   <p className="mt-1 text-sm text-gray-600">Click to upload an image</p>
+                   <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                </div>
+             )}
+            <input
+              type="file"
+              id="image-upload"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        <div>
+           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+             Dish Name
+           </label>
+           <input
+             type="text"
+             id="name"
+             name="name"
+             value={formData.name}
+             onChange={handleChange}
+             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 py-2 px-3 sm:text-sm"
+             placeholder="e.g. Spicy Chicken Curry"
+             required
+           />
+        </div>
       </div>
       
       <div>
@@ -111,7 +169,7 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
           rows={3}
           value={formData.description}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 py-2 px-3 sm:text-sm"
           required
         />
       </div>
@@ -126,23 +184,8 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
           name="ingredients"
           value={formData.ingredients}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 py-2 px-3 sm:text-sm"
           placeholder="e.g. Tomato, Onion, Garlic"
-          required
-        />
-      </div>
-      
-      <div>
-        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">
-          Image URL
-        </label>
-        <input
-          type="url"
-          id="imageUrl"
-          name="imageUrl"
-          value={formData.imageUrl}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
           required
         />
       </div>
@@ -150,7 +193,7 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
           <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-            Price ($)
+            Price (₹)
           </label>
           <input
             type="number"
@@ -158,9 +201,9 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
             name="price"
             value={formData.price}
             onChange={handleChange}
-            min="0.01"
-            step="0.01"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+            min="1"
+            step="1"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 py-2 px-3 sm:text-sm"
             required
           />
         </div>
@@ -174,7 +217,7 @@ const DishForm: React.FC<DishFormProps> = ({ initialValues, onSubmit, buttonText
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 py-2 px-3 sm:text-sm"
             required
           >
             {categories.map(category => (

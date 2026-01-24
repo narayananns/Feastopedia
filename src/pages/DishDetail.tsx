@@ -36,8 +36,49 @@ const DishDetail: React.FC = () => {
   const fetchDish = async (dishId: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL}/api/dishes/${dishId}`);
-      setDish(response.data);
+
+      // Check if it's an external dish (ID starts with 'ext-')
+      if (dishId.startsWith('ext-')) {
+        const realId = dishId.split('-')[1];
+        // Use clean axios instance
+        const externalAxios = axios.create();
+        delete externalAxios.defaults.headers.common['Authorization'];
+        
+        const response = await externalAxios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${realId}`);
+        
+        if (response.data.meals && response.data.meals[0]) {
+           const meal = response.data.meals[0];
+           
+           // Build ingredients array from the strIngredient1...20 fields
+           const ingredients: string[] = [];
+           for (let i = 1; i <= 20; i++) {
+             const ingredient = meal[`strIngredient${i}`];
+             const measure = meal[`strMeasure${i}`];
+             if (ingredient && ingredient.trim()) {
+               ingredients.push(`${measure ? measure : ''} ${ingredient}`.trim());
+             }
+           }
+
+           setDish({
+             _id: dishId,
+             name: meal.strMeal,
+             description: meal.strInstructions,
+             ingredients: ingredients,
+             imageUrl: meal.strMealThumb,
+             price: (10 + (parseInt(realId)%25) + 0.99) * 85, // Consistent price generation in Rupees
+             category: meal.strCategory,
+             createdBy: 'external' // Marker to hide edit/delete buttons
+           });
+        } else {
+           throw new Error('Meal not found in external API');
+        }
+
+      } else {
+        // Fetch from local backend
+        const response = await axios.get(`${BASE_URL}/api/dishes/${dishId}`);
+        setDish(response.data);
+      }
+
     } catch (error) {
       console.error('Error fetching dish:', error);
       toast.error('Failed to load dish details');
@@ -136,7 +177,7 @@ const DishDetail: React.FC = () => {
                   {dish.category}
                 </span>
               </div>
-              <div className="text-2xl font-bold text-orange-500">${dish.price.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-orange-600">₹{dish.price.toFixed(0)}</div>
             </div>
             
             <div className="mb-6">
@@ -146,18 +187,21 @@ const DishDetail: React.FC = () => {
             
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-700 mb-2">Ingredients</h2>
-              <ul className="list-disc pl-5 text-gray-600">
+              <div className="flex flex-wrap gap-2">
                 {dish.ingredients.map((ingredient, index) => (
-                  <li key={index}>{ingredient}</li>
+                  <span key={index} className="bg-orange-50 text-orange-800 text-sm px-3 py-1 rounded-full border border-orange-100">
+                    {ingredient}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </div>
             
-            {isOwner && (
-              <div className="flex space-x-4 mt-6">
+            <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-100">
+              {isOwner ? (
+                <>
                 <Link
                   to={`/edit-dish/${dish._id}`}
-                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Dish
@@ -165,13 +209,25 @@ const DishDetail: React.FC = () => {
                 
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                 >
-                  <Trash className="h-4 w-4 mr-2 text-red-500" />
+                  <Trash className="h-4 w-4 mr-2" />
                   Delete Dish
                 </button>
-              </div>
-            )}
+                </>
+              ) : (
+                 <>
+                  <button className="flex-1 bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition shadow-sm hover:shadow-md active:scale-95 transform duration-200">
+                    Add to Cart
+                  </button>
+                  <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-red-500 transition-colors">
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                     </svg>
+                  </button>
+                 </>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>

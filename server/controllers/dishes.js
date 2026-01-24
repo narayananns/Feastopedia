@@ -110,7 +110,7 @@ export const deleteDish = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this dish' });
     }
     
-    await Dish.findByIdAndRemove(id);
+    await Dish.findByIdAndDelete(id);
     
     res.status(200).json({ message: 'Dish deleted successfully' });
   } catch (error) {

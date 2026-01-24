@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, CheckCircle, Clock, Users, Star } from 'lucide-react';
 import DishCard from '../components/DishCard';
 import { BASE_URL } from '../utils/constants';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Dish {
   _id: string;
@@ -18,12 +19,97 @@ interface Dish {
 const Home: React.FC = () => {
   const [featuredDishes, setFeaturedDishes] = useState<Dish[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const { isAuthenticated } = useAuth();
+  
   useEffect(() => {
     const fetchFeaturedDishes = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/api/dishes?limit=4`);
-        setFeaturedDishes(response.data.slice(0, 4));
+        // Use a clean axios instance for external calls to bypass Auth headers
+        const externalAxios = axios.create();
+        delete externalAxios.defaults.headers.common['Authorization'];
+
+         // Use a reliable search term 'Chicken' to ensure we always get data, instead of generic search
+        const [localResult, externalResult] = await Promise.allSettled([
+          axios.get(`${BASE_URL}/api/dishes?limit=4`),
+          externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Chicken')
+        ]);
+
+        let allDishes: Dish[] = [];
+
+        // 1. Process Local Dishes
+        if (localResult.status === 'fulfilled') {
+          if (Array.isArray(localResult.value.data)) {
+            allDishes = [...allDishes, ...localResult.value.data];
+          }
+        }
+
+        // 2. Process External Dishes
+        if (externalResult.status === 'fulfilled') {
+          const data = externalResult.value.data;
+          if (data && data.meals) {
+            const externalMeals = data.meals.slice(0, 8).map((meal: any) => {
+               // Generate a price
+               const pseudoRandomPrice = (12 + (parseInt(meal.idMeal.slice(-2)) || 50) / 4) * 85;
+               
+               return {
+                _id: `ext-${meal.idMeal}`,
+                name: meal.strMeal,
+                description: meal.strInstructions 
+                  ? `${meal.strInstructions.slice(0, 100)}...` 
+                  : 'Delicious food.',
+                imageUrl: meal.strMealThumb,
+                price: parseFloat(pseudoRandomPrice.toFixed(0)),
+                category: meal.strCategory
+              };
+            });
+            allDishes = [...allDishes, ...externalMeals];
+          }
+        }
+        
+        // Remove duplicates and Shuffle slightly (optional) or just take top
+        allDishes = Array.from(new Map(allDishes.map(item => [item._id, item])).values());
+
+        // 3. Fallback (Demo Data) if absolutely nothing loaded
+        if (allDishes.length === 0) {
+           allDishes = [
+            {
+              _id: 'demo-home-1',
+              name: 'Grilled Salmon',
+              description: 'Fresh Atlantic salmon fillet grilled to perfection.',
+              imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a7270028d?auto=format&fit=crop&w=800&q=80',
+              price: 1999,
+              category: 'Main Course'
+            },
+            {
+              _id: 'demo-home-2',
+              name: 'Classic Cheeseburger',
+              description: 'Juicy beef patty with melted cheddar.',
+              imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
+              price: 1299, 
+              category: 'Main Course'
+            },
+            {
+              _id: 'demo-home-3',
+              name: 'Chocolate Lava Cake',
+              description: 'Rich chocolate cake with a molten center.',
+              imageUrl: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=800&q=80',
+              price: 749,
+              category: 'Dessert'
+            },
+            {
+              _id: 'demo-home-4',
+              name: 'Caesar Salad',
+              description: 'Crisp romaine lettuce with Caesar dressing.',
+              imageUrl: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=800&q=80',
+              price: 899,
+              category: 'Appetizer'
+            }
+          ];
+        }
+
+        // Take the top 4
+        setFeaturedDishes(allDishes.slice(0, 4));
+
       } catch (error) {
         console.error('Error fetching featured dishes:', error);
       } finally {
@@ -86,7 +172,7 @@ const Home: React.FC = () => {
                 Explore Dishes
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
-              {!isLoading && (
+              {!isLoading && !isAuthenticated && (
                 <Link 
                   to="/register" 
                   className="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 py-2 px-6 rounded-md transition duration-300"
@@ -182,10 +268,43 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Join Us Banner */}
+      {/* Features Section */}
+      <section className="mb-12 bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Why Choose FeastoPedia?</h2>
+          <p className="text-gray-500">We bring the best culinary experience to your screen</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center p-4">
+             <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+                <Clock size={32} />
+             </div>
+             <h3 className="text-lg font-semibold mb-2">Quick Recipes</h3>
+             <p className="text-gray-500 text-sm">Find easy-to-make recipes that are ready in 30 minutes or less.</p>
+          </div>
+          <div className="text-center p-4">
+             <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+                <Users size={32} />
+             </div>
+             <h3 className="text-lg font-semibold mb-2">Community Driven</h3>
+             <p className="text-gray-500 text-sm">Share your own recipes and get feedback from our passionate community.</p>
+          </div>
+          <div className="text-center p-4">
+             <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+                <Star size={32} />
+             </div>
+             <h3 className="text-lg font-semibold mb-2">Top Rated Dishes</h3>
+             <p className="text-gray-500 text-sm">Discover the most loved dishes as voted by foodies like you.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Join Us Banner - Only show if not logged in */}
+      {!isAuthenticated && (
       <section className="bg-orange-500 rounded-xl overflow-hidden shadow-lg">
         <div className="container mx-auto py-12 px-4 md:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Join Our Food Community</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Join the Community</h2>
           <p className="text-white text-opacity-90 mb-6 max-w-2xl mx-auto">
             Sign up to share your favorite recipes, save dishes, and connect with other food enthusiasts.
           </p>
@@ -197,6 +316,7 @@ const Home: React.FC = () => {
           </Link>
         </div>
       </section>
+      )}
     </div>
   );
 };
