@@ -24,6 +24,18 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchFeaturedDishes = async () => {
       try {
+        // Cache Check
+        const CACHE_KEY = 'feastopedia_home_v1';
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 30 * 60 * 1000) {
+               setFeaturedDishes(data);
+               setIsLoading(false);
+               return;
+            }
+        }
+
         // Use a clean axios instance for external calls to bypass Auth headers
         const externalAxios = axios.create();
         delete externalAxios.defaults.headers.common['Authorization'];
@@ -108,7 +120,14 @@ const Home: React.FC = () => {
         }
 
         // Take the top 4
-        setFeaturedDishes(allDishes.slice(0, 4));
+        const finalDishes = allDishes.slice(0, 4);
+        
+        sessionStorage.setItem('feastopedia_home_v1', JSON.stringify({
+           data: finalDishes,
+           timestamp: Date.now()
+        }));
+
+        setFeaturedDishes(finalDishes);
 
       } catch (error) {
         console.error('Error fetching featured dishes:', error);
@@ -238,29 +257,33 @@ const Home: React.FC = () => {
       {/* Categories Section */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Categories</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {['Appetizer', 'Main Course', 'Dessert', 'Beverage', 'Vegan', 'Vegetarian'].map((category) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+          {[
+            { name: 'Appetizer', icon: '🍲' },
+            { name: 'Main Course', icon: '🍝' },
+            { name: 'Dessert', icon: '🍰' },
+            { name: 'Seafood', icon: '🦐' },
+            { name: 'Vegan', icon: '🥗' },
+            { name: 'Vegetarian', icon: '🥦' },
+            { name: 'Indian', icon: '🍛' },
+            { name: 'Breakfast', icon: '🥞' }
+          ].map((cat) => (
             <Link 
-              key={category} 
-              to={`/dishes?category=${category}`}
+              key={cat.name} 
+              to={`/dishes?category=${cat.name}`}
               className="group"
             >
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="bg-white rounded-lg p-4 shadow-md text-center hover:shadow-lg transition-all duration-300 h-full flex flex-col items-center justify-center"
+                className="bg-white rounded-lg p-4 shadow-md text-center hover:shadow-lg transition-all duration-300 h-full flex flex-col items-center justify-center transform group-hover:bg-orange-50 border border-transparent group-hover:border-orange-100"
               >
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors duration-300">
-                  <span className="text-orange-500 text-xl">
-                    {category === 'Appetizer' && '🍲'}
-                    {category === 'Main Course' && '🍝'}
-                    {category === 'Dessert' && '🍰'}
-                    {category === 'Beverage' && '🥤'}
-                    {category === 'Vegan' && '🥗'}
-                    {category === 'Vegetarian' && '🥦'}
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors duration-300 shadow-inner">
+                  <span className="text-3xl filter drop-shadow-sm">
+                    {cat.icon}
                   </span>
                 </div>
-                <h3 className="font-medium text-gray-800 group-hover:text-orange-500 transition-colors duration-300">
-                  {category}
+                <h3 className="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors duration-300 text-lg">
+                  {cat.name}
                 </h3>
               </motion.div>
             </Link>

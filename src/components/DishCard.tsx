@@ -27,6 +27,8 @@ const DishCard: React.FC<DishProps> = ({ id, name, description, imageUrl, price,
         <img
           src={imageUrl || DEFAULT_DISH_IMAGE}
           alt={name}
+          loading="lazy"
+          decoding="async"
           onError={handleImageError}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />

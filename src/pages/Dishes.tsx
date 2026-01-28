@@ -77,6 +77,30 @@ const Dishes: React.FC = () => {
     try {
       setIsLoading(true);
 
+      // Cache Mechanism: Check SessionStorage
+      const CACHE_KEY = 'feastopedia_dishes_v2'; 
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+         try {
+           const { data, timestamp } = JSON.parse(cached);
+           // Cache validity: 30 minutes
+           if (Date.now() - timestamp < 30 * 60 * 1000) {
+             setDishes(data);
+             
+             // Extract categories
+             const defaultCategories = ['Appetizer', 'Main Course', 'Dessert', 'Seafood', 'Vegan', 'Vegetarian', 'Indian', 'Breakfast'];
+             const dynamicCategories = Array.from(new Set(data.map((d: Dish) => d.category)));
+             const uniqueCategories = Array.from(new Set([...defaultCategories, ...(dynamicCategories as string[])])).sort();
+             setCategories(uniqueCategories);
+             
+             setIsLoading(false);
+             return; 
+           }
+         } catch (e) {
+           sessionStorage.removeItem(CACHE_KEY);
+         }
+      }
+
       // Use a clean axios instance for external calls to bypass Auth headers which cause CORS errors
       const externalAxios = axios.create();
       delete externalAxios.defaults.headers.common['Authorization'];
@@ -90,10 +114,25 @@ const Dishes: React.FC = () => {
       
       const promises = [
         axios.get(`${BASE_URL}/api/dishes`),
+        // Core Searches (Full Details)
         externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Chicken'),
         externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Pasta'),
         externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Seafood'),
-        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegetarian')
+        
+        // Explicit Category Filters (Partial Details - handled by index)
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?a=Indian'),   // Index 4
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegetarian'),// Index 5
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Dessert'),   // Index 6
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Starter'),   // Index 7
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Breakfast'), // Index 8
+        
+        // More Searches
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Beef'),
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Pork'),
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Lamb'),
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=Salad'),
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Side'),
+        externalAxios.get('https://www.themealdb.com/api/json/v1/1/filter.php?c=Vegan')
       ];
 
       const results = await Promise.allSettled(promises);
@@ -109,31 +148,46 @@ const Dishes: React.FC = () => {
         console.warn('Local database disconnected:', results[0].reason);
       }
 
-      // 2. Process External API Results (Indices 1-4)
+      // 2. Process External API Results
       for (let i = 1; i < results.length; i++) {
         const result = results[i];
         if (result.status === 'fulfilled' && result.value.data.meals) {
           const meals = result.value.data.meals;
           
           const processedMeals = meals.map((meal: any) => {
-            // Determine Category
-            let category = 'Main Course';
-            if (i === 4) category = 'Vegetarian'; // From vegetarian request
-            else if (meal.strCategory) category = meal.strCategory;
-            
+            // Determine Category from API directly
+            let category = meal.strCategory || 'Main Course';
+
+            // Priority 1: Explicit Category by Source Index
+            // Indices align with the promises array above
+            if (i === 4) category = 'Indian';
+            else if (i === 5) category = 'Vegetarian';
+            else if (i === 6) category = 'Dessert';
+            else if (i === 7) category = 'Appetizer';
+            else if (i === 8) category = 'Breakfast';
+            else if (i === 13) category = 'Appetizer';
+            else if (i === 14) category = 'Vegan';
+
+            // Priority 2: Dynamic Detection (for search results)
+            else if (meal.strArea === 'Indian') {
+                category = 'Indian';
+            }
             // Map common API categories to our standardized ones
-            if (['Starter', 'Side', 'Goat', 'Lamb', 'Pork', 'Beef', 'Chicken', 'Seafood', 'Pasta'].includes(category)) {
+            else if (['Goat', 'Lamb', 'Pork', 'Beef', 'Chicken', 'Pasta'].includes(category)) {
                category = 'Main Course';
-            } else if (category === 'Vegetarian' || category === 'Vegan') {
+            } else if (['Starter', 'Side', 'Miscellaneous'].includes(category)) {
+               category = 'Appetizer';
+            } else if (category === 'Vegetarian') {
                category = 'Vegetarian';
-            } else if (category === 'Dessert') {
-               category = 'Dessert';
+            } else if (category === 'Vegan') {
+               category = 'Vegan';
+            } else if (category === 'Breakfast') {
+               category = 'Breakfast';
             }
 
-            // Generate Price
-            // Use ID to make price consistent (same dish = same price every time)
+            // Generate Price (Consistent hash)
             const idNum = parseInt(meal.idMeal);
-            const price = (10 + (idNum % 25) + 0.99) * 85;
+            const price = (12 + (idNum % 20) + 0.99) * 85;
 
             return {
               _id: `ext-${meal.idMeal}`,
@@ -208,14 +262,43 @@ const Dishes: React.FC = () => {
             imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=800&q=80',
             price: 6.99,
             category: 'Beverage'
+          },
+          {
+            _id: 'demo-7',
+            name: 'Chicken Tikka Masala',
+            description: 'Roasted marinated chicken chunks in spiced curry sauce. The curry is usually creamy and orange-coloured.',
+            imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80',
+            price: 14.99,
+            category: 'Indian'
+          },
+          {
+            _id: 'demo-8',
+            name: 'Blueberry Pancakes',
+            description: 'Fluffy buttermilk pancakes filled with fresh blueberries, served with maple syrup and butter.',
+            imageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',
+            price: 10.99,
+            category: 'Breakfast'
           }
         ];
       }
 
+      // Save to SessionStorage Cache
+      try {
+        sessionStorage.setItem('feastopedia_dishes_v2', JSON.stringify({
+           data: allDishes,
+           timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.warn('Failed to cache dishes', e);
+      }
+
       setDishes(allDishes);
       
-      // Extract unique categories dynamically from the loaded data
-      const uniqueCategories = Array.from(new Set(allDishes.map(dish => dish.category))).sort();
+      // Merge default categories with any dynamic ones found in the data to ensure all options are available
+      const defaultCategories = ['Appetizer', 'Main Course', 'Dessert', 'Seafood', 'Vegan', 'Vegetarian', 'Indian', 'Breakfast'];
+      const dynamicCategories = Array.from(new Set(allDishes.map(dish => dish.category)));
+      const uniqueCategories = Array.from(new Set([...defaultCategories, ...dynamicCategories])).sort();
+      
       setCategories(uniqueCategories);
       
     } catch (error) {

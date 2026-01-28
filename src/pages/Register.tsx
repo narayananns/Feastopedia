@@ -76,6 +76,15 @@ const Register: React.FC = () => {
     }
   };
 
+  const validatePassword = (password: string) => {
+    if (password.length < 8) return "Password must be at least 8 characters long";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+    if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return "Password must contain at least one special character";
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -90,9 +99,10 @@ const Register: React.FC = () => {
       return;
     }
     
-    // Validate password length
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+    // Validate password strength
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
     
@@ -240,7 +250,7 @@ const Register: React.FC = () => {
               placeholder="••••••••"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Must be at least 6 characters long
+              Must be 8+ chars with uppercase, lowercase, number & special char
             </p>
           </div>
           

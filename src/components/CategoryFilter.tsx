@@ -13,36 +13,42 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onSelectCategory 
 }) => {
   return (
-    <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide py-2">
-      <div className="flex space-x-3 px-1 min-w-max">
-        <motion.button
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onSelectCategory(null)}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm border ${
-            selectedCategory === null
-              ? 'bg-orange-500 text-white border-orange-500 shadow-md ring-2 ring-orange-200'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500 hover:shadow-md'
-          }`}
-        >
-          All Dishes
-        </motion.button>
-        
-        {categories.map(category => (
+    <div className="mb-8 relative group">
+      {/* Gradient fade indicators for scrolling */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-orange-50 to-transparent pointer-events-none z-10 hidden sm:block" />
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-orange-50 to-transparent pointer-events-none z-10 hidden sm:block" />
+      
+      <div className="overflow-x-auto pb-4 pt-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex space-x-3 min-w-max">
           <motion.button
-            key={category}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onSelectCategory(category)}
-            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm border ${
-              selectedCategory === category
-                ? 'bg-orange-500 text-white border-orange-500 shadow-md ring-2 ring-orange-200'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500 hover:shadow-md'
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onSelectCategory(null)}
+            className={`px-6 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 shadow-sm border ${
+              selectedCategory === null
+                ? 'bg-orange-600 text-white border-orange-600 shadow-orange-200 shadow-lg translate-y-[-1px]'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-md hover:bg-orange-50'
             }`}
           >
-            {category}
+            All Dishes
           </motion.button>
-        ))}
+          
+          {categories.map(category => (
+            <motion.button
+              key={category}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onSelectCategory(category)}
+              className={`px-6 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 shadow-sm border ${
+                selectedCategory === category
+                  ? 'bg-orange-600 text-white border-orange-600 shadow-orange-200 shadow-lg translate-y-[-1px]'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300 hover:text-orange-600 hover:shadow-md hover:bg-orange-50'
+              }`}
+            >
+              {category}
+            </motion.button>
+          ))}
+        </div>
       </div>
     </div>
   );
