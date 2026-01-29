@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, Edit, Trash, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { BASE_URL } from '../utils/constants';
+import Skeleton from '../components/Skeleton';
 
 interface Dish {
   _id: string;
@@ -114,8 +115,49 @@ const DishDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Skeleton width={120} height={24} />
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="md:flex">
+            {/* Image Skeleton */}
+            <div className="md:w-1/2">
+              <Skeleton className="w-full h-64 md:h-full" /> 
+            </div>
+
+            {/* Content Skeleton */}
+            <div className="p-6 md:w-1/2">
+              <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <Skeleton width={200} height={32} className="mb-2" />
+                    <Skeleton width={100} height={24} className="rounded-full" />
+                  </div>
+                  <Skeleton width={80} height={36} />
+              </div>
+
+              <div className="mb-6">
+                  <Skeleton width={120} height={24} className="mb-2" />
+                  <Skeleton height={100} />
+              </div>
+
+              <div className="mb-6">
+                  <Skeleton width={120} height={24} className="mb-2" />
+                  <div className="flex gap-2">
+                    <Skeleton width={80} height={32} className="rounded-full" />
+                    <Skeleton width={80} height={32} className="rounded-full" />
+                    <Skeleton width={80} height={32} className="rounded-full" />
+                  </div>
+              </div>
+
+              <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-100">
+                  <Skeleton className="flex-1 h-12 rounded-lg" />
+                  <Skeleton width={48} height={48} className="rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

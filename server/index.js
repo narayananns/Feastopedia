@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import userRoutes from './routes/users.js';
 import dishRoutes from './routes/dishes.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cors());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/dishes', dishRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root route
 app.get('/', (req, res) => {

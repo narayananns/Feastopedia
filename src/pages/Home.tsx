@@ -6,6 +6,7 @@ import { ChevronRight, CheckCircle, Clock, Users, Star } from 'lucide-react';
 import DishCard from '../components/DishCard';
 import { BASE_URL } from '../utils/constants';
 import { useAuth } from '../contexts/AuthContext';
+import Skeleton from '../components/Skeleton';
 
 interface Dish {
   _id: string;
@@ -230,10 +231,10 @@ const Home: React.FC = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, index) => (
-              <div key={index} className="bg-white rounded-lg overflow-hidden shadow-md p-4 h-64 animate-pulse">
-                <div className="w-full h-32 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div key={index} className="bg-white rounded-lg overflow-hidden shadow-md p-4 h-64">
+                <Skeleton className="w-full h-32 mb-4" />
+                <Skeleton className="w-3/4 h-4 mb-2" />
+                <Skeleton className="w-1/2 h-4" />
               </div>
             ))}
           </div>

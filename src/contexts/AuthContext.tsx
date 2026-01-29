@@ -6,15 +6,22 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  avatar?: string;
+  role?: 'user' | 'admin';
+  isVerified?: boolean;
+  isPhoneVerified?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, phone: string) => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
   logout: () => void;
 }
 
@@ -75,10 +82,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Register function
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, phone: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`${BASE_URL}/api/users/register`, { name, email, password });
+      const response = await axios.post(`${BASE_URL}/api/users/register`, { name, email, password, phone });
       
       const { token: newToken, user: userData } = response.data;
       
@@ -112,15 +119,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
         isAuthenticated: !!token,
+        isAdmin: user?.role === 'admin',
         isLoading,
         login,
         register,
+        updateUser,
         logout
       }}
     >

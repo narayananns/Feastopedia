@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChefHat } from 'lucide-react';
+import { Menu, X, ChefHat, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -62,12 +62,29 @@ const Navbar: React.FC = () => {
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition duration-200"
-              >
-                Logout
-              </button>
+              <div className="flex items-center space-x-3">
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    title="Admin Dashboard"
+                    className="flex items-center text-purple-600 hover:text-purple-700 font-medium bg-purple-50 p-2 rounded-full transition-colors"
+                  >
+                    <ShieldCheck size={20} />
+                  </Link>
+                )}
+                <Link 
+                  to="/profile" 
+                  className="flex items-center space-x-1 text-gray-700 hover:text-orange-500 font-medium bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
+                >
+                  <span>Profile</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition duration-200"
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
               <>
                 {authLinks.map((link) => (
@@ -126,15 +143,31 @@ const Navbar: React.FC = () => {
               
               {/* Auth Links - Mobile */}
               {isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full text-left block text-gray-700 hover:text-orange-500 transition duration-200 py-2 font-medium"
-                >
-                  Logout
-                </button>
+                <>                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="block px-3 py-2 text-purple-600 font-medium hover:bg-purple-50 rounded-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}                  <Link
+                    to="/profile"
+                    className="block text-gray-700 hover:text-orange-500 transition duration-200 py-2 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left block text-red-600 hover:text-red-700 transition duration-200 py-2 font-medium"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <>
                   {authLinks.map((link) => (

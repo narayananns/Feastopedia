@@ -30,8 +30,8 @@ const Footer: React.FC = () => {
           <div>
              <h3 className="text-lg font-semibold mb-4 text-orange-500">Contact Info</h3>
              <ul className="space-y-3 text-gray-400 text-sm">
-               <li className="flex items-start"><MapPin size={18} className="mr-2 mt-0.5 flex-shrink-0" /> 123 Foodie Lane, Flavor Town, FT 56000</li>
-               <li className="flex items-center"><Phone size={18} className="mr-2 flex-shrink-0" /> +91 98765 43210</li>
+               <li className="flex items-start"><MapPin size={18} className="mr-2 mt-0.5 flex-shrink-0" /> Coimbatore , India</li>
+               <li className="flex items-center"><Phone size={18} className="mr-2 flex-shrink-0" /> +91 9080423335</li>
                <li className="flex items-center"><Mail size={18} className="mr-2 flex-shrink-0" /> support@feastopedia.com</li>
              </ul>
           </div>

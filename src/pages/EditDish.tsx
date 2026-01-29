@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { AlertCircle } from 'lucide-react';
 import DishForm from '../components/DishForm';
 import { BASE_URL } from '../utils/constants';
+import Skeleton from '../components/Skeleton';
 
 interface Dish {
   _id: string;
@@ -72,8 +73,22 @@ const EditDish: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      <div>
+        <div className="mb-8">
+           <Skeleton width={200} height={36} className="mb-2" />
+           <Skeleton width={300} height={24} />
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl">
+           <Skeleton height={42} className="mb-6" />
+           <Skeleton height={100} className="mb-6" />
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <Skeleton height={42} />
+              <Skeleton height={42} />
+           </div>
+           <Skeleton height={42} className="mb-6" />
+           <Skeleton height={42} className="mb-6" />
+           <Skeleton height={50} className="w-full" />
+        </div>
       </div>
     );
   }
